@@ -75,20 +75,20 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << EOF
                 "collect_list": [
                     {
                         "file_path": "/var/log/webapp/app.log",
-                        "log_group_name": "${LOG_GROUP_NAME}",
+                        "log_group_name": "$${LOG_GROUP_NAME}",
                         "log_stream_name": "{instance_id}/application",
                         "timezone": "UTC",
                         "timestamp_format": "%Y-%m-%d %H:%M:%S"
                     },
                     {
                         "file_path": "/var/log/codedeploy-agent/codedeploy-agent.log",
-                        "log_group_name": "${LOG_GROUP_NAME}",
+                        "log_group_name": "$${LOG_GROUP_NAME}",
                         "log_stream_name": "{instance_id}/codedeploy-agent",
                         "timezone": "UTC"
                     },
                     {
                         "file_path": "/var/log/messages",
-                        "log_group_name": "${LOG_GROUP_NAME}",
+                        "log_group_name": "$${LOG_GROUP_NAME}",
                         "log_stream_name": "{instance_id}/system",
                         "timezone": "UTC"
                     }
@@ -164,7 +164,7 @@ echo "Installing CodeDeploy Agent..."
 dnf install -y ruby
 
 cd /home/ec2-user
-wget https://aws-codedeploy-${AWS_REGION}.s3.${AWS_REGION}.amazonaws.com/latest/install
+wget https://aws-codedeploy-$${AWS_REGION}.s3.$${AWS_REGION}.amazonaws.com/latest/install
 chmod +x ./install
 ./install auto
 
@@ -190,11 +190,11 @@ echo "Setting up application environment..."
 
 cat > /opt/webapp/.env << EOF
 NODE_ENV=production
-PORT=${APP_PORT}
-AWS_REGION=${AWS_REGION}
-DYNAMODB_TABLE=${DYNAMODB_TABLE}
-SECRETS_MANAGER_NAME=${SECRETS_MANAGER_NAME}
-LOG_GROUP_NAME=${LOG_GROUP_NAME}
+PORT=$${APP_PORT}
+AWS_REGION=$${AWS_REGION}
+DYNAMODB_TABLE=$${DYNAMODB_TABLE}
+SECRETS_MANAGER_NAME=$${SECRETS_MANAGER_NAME}
+LOG_GROUP_NAME=$${LOG_GROUP_NAME}
 EOF
 
 chown webapp:webapp /opt/webapp/.env
@@ -283,7 +283,7 @@ app.get('/api/sessions', async (req, res) => {
     
     const result = await dynamodb.scan(params).promise();
     
-    logger.info(`Retrieved ${result.Items.length} sessions from DynamoDB`);
+    logger.info(`Retrieved $${result.Items.length} sessions from DynamoDB`);
     res.json({ sessions: result.Items });
   } catch (error) {
     logger.error('Error retrieving sessions:', error);
@@ -293,8 +293,8 @@ app.get('/api/sessions', async (req, res) => {
 
 // Start server
 app.listen(port, () => {
-  logger.info(`Server running on port ${port}`);
-  console.log(`Server running on port ${port}`);
+  logger.info(`Server running on port $${port}`);
+  console.log(`Server running on port $${port}`);
 });
 EOF
 
@@ -356,6 +356,6 @@ systemctl status amazon-cloudwatch-agent
 echo "User data script execution completed successfully!"
 
 # Test the application
-curl -f http://localhost:${APP_PORT}/health || echo "Application health check failed"
+curl -f http://localhost:$${APP_PORT}/health || echo "Application health check failed"
 
-echo "Instance setup complete. Application should be available on port ${APP_PORT}" 
+echo "Instance setup complete. Application should be available on port $${APP_PORT}" 

@@ -12,9 +12,9 @@ locals {
     dynamodb_table_name   = aws_dynamodb_table.app_sessions.name
     secrets_manager_name  = aws_secretsmanager_secret.app_secrets.name
     log_group_name        = aws_cloudwatch_log_group.app.name
-    aws_region           = var.aws_region
-    codedeploy_app_name  = var.codedeploy_app_name
-    deployment_group     = var.codedeploy_deployment_group
+    aws_region            = var.aws_region
+    codedeploy_app_name   = var.codedeploy_app_name
+    deployment_group      = var.codedeploy_deployment_group
   }))
 }
 
@@ -148,41 +148,26 @@ resource "aws_lb" "main" {
 
 
 resource "aws_lb_target_group" "main" {
-  name     = "${var.project_name}-${var.environment}-tg"
-  port     = var.app_port
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.main.id
+  name        = "${var.project_name}-${var.environment}-tg"
+  port        = var.app_port
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "instance"
 
   health_check {
     enabled             = true
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
     interval            = 30
-    path                = var.health_check_path
-    matcher             = "200"
+    path                = "/health"
     port                = "traffic-port"
     protocol            = "HTTP"
-  }
-
-  target_type                          = "instance"
-  deregistration_delay                 = 300
-  slow_start                          = 0
-  load_balancing_algorithm_type       = "round_robin"
-  preserve_client_ip                  = false
-
-  stickiness {
-    type            = "lb_cookie"
-    enabled         = false
-    cookie_duration = 86400
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "200"
   }
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-target-group"
-  }
-
-  lifecycle {
-    create_before_destroy = true
+    Name = "${var.project_name}-${var.environment}-tg"
   }
 }
 
@@ -192,13 +177,8 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
-    type = "redirect"
-
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.main.arn
   }
 
   tags = {
@@ -206,30 +186,7 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# HTTPS Listener
-resource "aws_lb_listener" "https" {
-  count             = var.certificate_arn != "" || var.domain_name != "" ? 1 : 0
-  load_balancer_arn = aws_lb.main.arn
-  port              = "443"
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
-  certificate_arn   = var.certificate_arn != "" ? var.certificate_arn : aws_acm_certificate.alb[0].arn
 
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.main.arn
-  }
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-https-listener"
-  }
-}
-
-# =============================================================================
-# AUTO SCALING POLICIES
-# =============================================================================
-
-# Scale Up Policy
 resource "aws_autoscaling_policy" "scale_up" {
   name                   = "${var.project_name}-${var.environment}-scale-up"
   scaling_adjustment     = 1
@@ -239,7 +196,6 @@ resource "aws_autoscaling_policy" "scale_up" {
   policy_type           = "SimpleScaling"
 }
 
-# Scale Down Policy
 resource "aws_autoscaling_policy" "scale_down" {
   name                   = "${var.project_name}-${var.environment}-scale-down"
   scaling_adjustment     = -1

@@ -159,6 +159,11 @@ output "codedeploy_deployment_group_name" {
   value       = aws_codedeploy_deployment_group.main.deployment_group_name
 }
 
+output "codedeploy_s3_bucket" {
+  description = "The name of the S3 bucket for CodeDeploy artifacts"
+  value       = aws_s3_bucket.codedeploy_artifacts.id
+}
+
 # =============================================================================
 # IAM OUTPUTS
 # =============================================================================
@@ -190,16 +195,6 @@ output "cloudwatch_log_group_name" {
 # =============================================================================
 # SSL/TLS OUTPUTS
 # =============================================================================
-
-output "acm_certificate_arn" {
-  description = "ARN of the ACM certificate for ALB"
-  value       = var.certificate_arn != "" ? var.certificate_arn : try(aws_acm_certificate.alb[0].arn, "")
-}
-
-output "cloudfront_acm_certificate_arn" {
-  description = "ARN of the ACM certificate for CloudFront"
-  value       = try(aws_acm_certificate.cloudfront[0].arn, "")
-}
 
 # =============================================================================
 # VPC ENDPOINTS OUTPUTS

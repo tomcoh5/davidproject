@@ -2,22 +2,22 @@
 # VARIABLES FOR AWS HIGHLY AVAILABLE WEB TIER
 # =============================================================================
 
-variable "aws_region" {
-  description = "AWS region for deployment"
-  type        = string
-  default     = "us-east-1"
-}
-
 variable "project_name" {
-  description = "Name of the project (used for resource naming and tagging)"
+  description = "The name of the project"
   type        = string
-  default     = "webapp-ha"
+  default     = "app"
 }
 
 variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "The environment (e.g., 'dev', 'staging', 'prod')"
   type        = string
-  default     = "prod"
+  default     = "staging"
+}
+
+variable "aws_region" {
+  description = "The AWS region to deploy to"
+  type        = string
+  default     = "us-east-1"
 }
 
 # =============================================================================
@@ -65,7 +65,7 @@ variable "on_prem_db_ports" {
 # =============================================================================
 
 variable "app_port" {
-  description = "Port on which the application runs"
+  description = "The port the application will run on"
   type        = number
   default     = 3000
 }
@@ -137,15 +137,15 @@ variable "dynamodb_table_name" {
 # =============================================================================
 
 variable "codedeploy_app_name" {
-  description = "CodeDeploy application name"
+  description = "The name of the CodeDeploy application"
   type        = string
-  default     = "nodejs-webapp"
+  default     = "my-app"
 }
 
 variable "codedeploy_deployment_group" {
-  description = "CodeDeploy deployment group name"
+  description = "The name of the CodeDeploy deployment group"
   type        = string
-  default     = "production"
+  default     = "my-app-dg"
 }
 
 # =============================================================================

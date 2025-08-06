@@ -31,11 +31,12 @@ resource "aws_dynamodb_table" "app_sessions" {
     enabled        = true
   }
 
+  # Enable server-side encryption
   server_side_encryption {
-    enabled    = true
-    kms_key_id = "alias/aws/dynamodb"
+    enabled = true
   }
 
+  # Enable point-in-time recovery
   point_in_time_recovery {
     enabled = true
   }

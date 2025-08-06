@@ -29,14 +29,14 @@ provider "aws" {
 }
 
 
-# Get latest Amazon Linux 2024 AMI
+# Get latest Amazon Linux 2023 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["al2024-ami-*-x86_64"]
+    values = ["al2023-ami-*-x86_64"]
   }
 
   filter {

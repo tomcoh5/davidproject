@@ -9,45 +9,23 @@ resource "aws_codedeploy_app" "main" {
 
 
 resource "aws_codedeploy_deployment_group" "main" {
-  app_name              = aws_codedeploy_app.main.name
-  deployment_group_name = "${var.project_name}-${var.environment}-${var.codedeploy_deployment_group}"
-  service_role_arn      = aws_iam_role.codedeploy.arn
+  app_name               = aws_codedeploy_app.main.name
+  deployment_group_name  = "${var.project_name}-${var.environment}-dg"
+  service_role_arn       = aws_iam_role.codedeploy.arn
+  deployment_config_name = aws_codedeploy_deployment_config.custom.id
 
-  deployment_config_name = "CodeDeployDefault.EC2AllInstancesBlueGreenFleet"
-
-  blue_green_deployment_config {
-    terminate_blue_instances_on_deployment_success {
-      action                         = "TERMINATE"
-      termination_wait_time_in_minutes = 5
-    }
-
-    deployment_ready_option {
-      action_on_timeout = "CONTINUE_DEPLOYMENT"
-    }
-
-    green_fleet_provisioning_option {
-      action = "COPY_AUTO_SCALING_GROUP"
+  ec2_tag_set {
+    ec2_tag_filter {
+      key   = "Name"
+      type  = "KEY_AND_VALUE"
+      value = "${var.project_name}-${var.environment}-app"
     }
   }
 
-  auto_scaling_groups = [aws_autoscaling_group.main.name]
-
-  load_balancer_info {
-    target_group_info {
-      name = aws_lb_target_group.main.name
-    }
-  }
-
-  ec2_tag_filter {
-    key   = "Name"
-    type  = "KEY_AND_VALUE"
-    value = "${var.project_name}-${var.environment}-asg-instance"
-  }
-
-  ec2_tag_filter {
-    key   = "Environment"
-    type  = "KEY_AND_VALUE"
-    value = var.environment
+  trigger_configuration {
+    trigger_name       = "deployment-failure"
+    trigger_target_arn = aws_sns_topic.alerts.arn
+    trigger_events     = ["DeploymentFailure"]
   }
 
   auto_rollback_configuration {
@@ -63,27 +41,21 @@ resource "aws_codedeploy_deployment_group" "main" {
     ]
   }
 
-  tags = {
-    Name = "${var.project_name}-${var.environment}-${var.codedeploy_deployment_group}"
-  }
-
-  depends_on = [aws_iam_role_policy_attachment.codedeploy]
+  autoscaling_groups = [aws_autoscaling_group.main.name]
 }
 
+# CodeDeploy Custom Deployment Configuration
 resource "aws_codedeploy_deployment_config" "custom" {
-  deployment_config_name = "${var.project_name}-${var.environment}-fast-deployment"
+  deployment_config_name = "${var.project_name}-${var.environment}-custom-deployment"
   compute_platform       = "Server"
 
   minimum_healthy_hosts {
-    type  = "HOST_COUNT"
-    value = 1
-  }
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-fast-deployment"
+    type  = "FLEET_PERCENT"
+    value = 50
   }
 }
 
+# S3 bucket for CodeDeploy artifacts
 resource "aws_s3_bucket" "codedeploy_artifacts" {
   bucket = "${var.project_name}-${var.environment}-codedeploy-artifacts-${random_id.codedeploy_suffix.hex}"
 
@@ -92,12 +64,10 @@ resource "aws_s3_bucket" "codedeploy_artifacts" {
   }
 }
 
-# Generate random suffix for S3 bucket name
 resource "random_id" "codedeploy_suffix" {
   byte_length = 4
 }
 
-# S3 bucket versioning
 resource "aws_s3_bucket_versioning" "codedeploy_artifacts" {
   bucket = aws_s3_bucket.codedeploy_artifacts.id
   versioning_configuration {
@@ -105,7 +75,6 @@ resource "aws_s3_bucket_versioning" "codedeploy_artifacts" {
   }
 }
 
-# S3 bucket server-side encryption
 resource "aws_s3_bucket_server_side_encryption_configuration" "codedeploy_artifacts" {
   bucket = aws_s3_bucket.codedeploy_artifacts.id
 
@@ -116,7 +85,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "codedeploy_artifa
   }
 }
 
-# S3 bucket public access block
 resource "aws_s3_bucket_public_access_block" "codedeploy_artifacts" {
   bucket = aws_s3_bucket.codedeploy_artifacts.id
 
@@ -134,24 +102,21 @@ resource "aws_s3_bucket_lifecycle_configuration" "codedeploy_artifacts" {
     id     = "codedeploy_artifacts_lifecycle"
     status = "Enabled"
 
-    transition {
-      days          = 30
-      storage_class = "STANDARD_IA"
+    filter {
+      prefix = "/"
     }
 
     expiration {
-      days = 90
+      days = 7
     }
 
     noncurrent_version_expiration {
-      noncurrent_days = 30
+      noncurrent_days = 7
     }
   }
 }
 
-# =============================================================================
-# SAMPLE DEPLOYMENT SCRIPTS
-# =============================================================================
+
 
 # Upload sample deployment scripts to S3
 resource "aws_s3_object" "appspec" {

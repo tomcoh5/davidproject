@@ -1,11 +1,3 @@
-resource "aws_cloudfront_origin_access_control" "main" {
-  name                              = "${var.project_name}-${var.environment}-oac"
-  description                       = "Origin Access Control for ${var.project_name}"
-  origin_access_control_origin_type = "load-balancer"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
-}
-
 resource "aws_cloudfront_cache_policy" "dynamic" {
   name        = "${var.project_name}-${var.environment}-dynamic-cache"
   comment     = "Cache policy for dynamic content"
@@ -48,7 +40,6 @@ resource "aws_cloudfront_origin_request_policy" "main" {
       items = [
         "Accept",
         "Accept-Language",
-        "Authorization",
         "CloudFront-Forwarded-Proto",
         "Host",
         "User-Agent",
@@ -111,7 +102,6 @@ resource "aws_cloudfront_distribution" "main" {
   origin {
     domain_name              = aws_lb.main.dns_name
     origin_id                = "ALB-${aws_lb.main.name}"
-    origin_access_control_id = aws_cloudfront_origin_access_control.main.id
 
     custom_origin_config {
       http_port              = 80
@@ -185,6 +175,20 @@ resource "aws_s3_bucket" "cloudfront_logs" {
   }
 }
 
+resource "aws_s3_bucket_acl" "cloudfront_logs" {
+  bucket = aws_s3_bucket.cloudfront_logs.id
+  acl    = "private"
+
+  depends_on = [aws_s3_bucket_ownership_controls.cloudfront_logs]
+}
+
+resource "aws_s3_bucket_ownership_controls" "cloudfront_logs" {
+  bucket = aws_s3_bucket.cloudfront_logs.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
 resource "random_id" "s3_suffix" {
   byte_length = 4
 }
@@ -221,6 +225,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "cloudfront_logs" {
   rule {
     id     = "cloudfront_logs_lifecycle"
     status = "Enabled"
+
+    filter {
+      prefix = "cloudfront-logs/"
+    }
 
     transition {
       days          = 30

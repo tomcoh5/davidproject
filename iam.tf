@@ -74,17 +74,17 @@ resource "aws_iam_role_policy_attachment" "ec2_ssm" {
 }
 
 resource "aws_iam_role_policy_attachment" "ec2_cloudwatch" {
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
   role       = aws_iam_role.ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
 resource "aws_iam_role_policy_attachment" "ec2_codedeploy" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/EC2RoleForAWSCodeDeploy"
   role       = aws_iam_role.ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
 
 resource "aws_iam_instance_profile" "ec2" {
-  name_prefix = "${var.project_name}-${var.environment}-ec2-"
+  name = "${var.project_name}-${var.environment}-ec2-profile"
   role        = aws_iam_role.ec2.name
 
   tags = {
