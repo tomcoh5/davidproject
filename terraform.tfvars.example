@@ -1,0 +1,110 @@
+# =============================================================================
+# TERRAFORM VARIABLES EXAMPLE FILE
+# =============================================================================
+# Copy this file to terraform.tfvars and customize the values
+
+# =============================================================================
+# REQUIRED VARIABLES
+# =============================================================================
+
+# Phone number for SMS alerts (international format)
+alert_phone_number = "+1234567890"
+
+# =============================================================================
+# PROJECT CONFIGURATION
+# =============================================================================
+
+# Project name for resource naming
+project_name = "webapp-ha"
+
+# Environment name (dev, staging, prod)
+environment = "prod"
+
+# AWS region for deployment
+aws_region = "us-east-1"
+
+# =============================================================================
+# NETWORKING CONFIGURATION
+# =============================================================================
+
+# VPC CIDR block
+vpc_cidr = "10.0.0.0/16"
+
+# Availability zones (adjust for your region)
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# Public subnet CIDR blocks (for ALB and NAT Gateways)
+public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+
+# Private subnet CIDR blocks (for application instances)
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
+
+# On-premises database connectivity
+on_prem_cidr_blocks = ["192.168.1.0/24", "172.16.0.0/24"]
+on_prem_db_ports = [5432, 1433, 27017]  # PostgreSQL, SQL Server, MongoDB
+
+# =============================================================================
+# APPLICATION CONFIGURATION
+# =============================================================================
+
+# Application port
+app_port = 3000
+
+# Health check endpoint
+health_check_path = "/health"
+
+# EC2 instance type
+instance_type = "t3.medium"
+
+# Auto Scaling Group configuration
+min_size = 2
+max_size = 4
+desired_capacity = 2
+
+# =============================================================================
+# SSL/DOMAIN CONFIGURATION (OPTIONAL)
+# =============================================================================
+
+# Custom domain name for SSL certificates
+# domain_name = "example.com"
+
+# Existing ACM certificate ARN (if you have one)
+# certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+
+# =============================================================================
+# CROSS-ACCOUNT ACCESS (OPTIONAL)
+# =============================================================================
+
+# AWS Account ID that needs read access to Secrets Manager
+# cross_account_id = "123456789012"
+
+# =============================================================================
+# DYNAMODB CONFIGURATION
+# =============================================================================
+
+# DynamoDB table name
+dynamodb_table_name = "app-sessions"
+
+# DynamoDB uses on-demand (PAY_PER_REQUEST) billing mode
+
+# =============================================================================
+# CODEDEPLOY CONFIGURATION
+# =============================================================================
+
+# CodeDeploy application name
+codedeploy_app_name = "nodejs-webapp"
+
+# CodeDeploy deployment group name
+codedeploy_deployment_group = "production"
+
+# =============================================================================
+# COMMON TAGS
+# =============================================================================
+
+common_tags = {
+  Project     = "webapp-ha"
+  Environment = "prod"
+  ManagedBy   = "terraform"
+  Owner       = "devops-team"
+  CostCenter  = "engineering"
+} 
